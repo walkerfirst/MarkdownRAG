@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+data/chroma/*
+!data/chroma/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/metadata.sqlite
+context.md

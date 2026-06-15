@@ -1,0 +1,16 @@
+queries:
+  - query: "牧原股份 屠宰业务 渠道"
+    expected_files:
+      - "notes/sample_muyuan.md"
+    expected_keywords:
+      - "渠道"
+      - "屠宰"
+      - "双汇"
+
+  - query: "贵州茅台 经销商 i茅台"
+    expected_files:
+      - "notes/sample_maotai.md"
+    expected_keywords:
+      - "经销商"
+      - "i茅台"
+      - "直控"

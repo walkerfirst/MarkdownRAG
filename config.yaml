@@ -1,0 +1,26 @@
+project:
+  name: local-md-rag
+
+paths:
+  notes_dir: notes
+  chroma_dir: data/chroma
+  processed_dir: data/processed
+  metadata_db: data/metadata.sqlite
+  eval_queries: eval/queries.yaml
+
+embedding:
+  provider: sentence_transformers
+  model_name: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+
+chunking:
+  target_chars: 800
+  max_chars: 1200
+  min_chars: 200
+  overlap_chars: 100
+
+search:
+  top_k: 5
+  preview_chars: 500
+  min_score: 0.0
+  relative_score_ratio: 0.7
+  keyword_top_k: 20
