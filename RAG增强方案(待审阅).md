@@ -140,6 +140,25 @@ NotebookLM 的不可替代优势(作为补充):**音频/视频概览、幻灯片
 **待讨论 / 后续**
 - 若 evaluate 显示小模型不够,再评估升级 `BAAI/bge-m3`(1024维,~2.2GB,更慢更强)。
 
+**bge-m3 vs bge-small-zh-v1.5 对比(2026-06-20 讨论)**
+
+| 维度 | bge-small-zh-v1.5(现状) | bge-m3 |
+|---|---|---|
+| 参数/体积 | ~24M / ~95MB | ~560M / ~2.2GB |
+| 向量维度 | 512 | 1024 |
+| **最大输入长度** | **512 token(超出截断)** | **8192 token** |
+| 语言 | 中文专用 | 多语种(中英混排强) |
+| CPU 速度 | 快(已验证) | 慢约 1 个数量级 |
+| 内置能力 | 纯 dense | dense + sparse + ColBERT 多向量 |
+| query 指令前缀 | 需要 | 不需要 |
+| 中文检索质量(C-MTEB) | 中上 | 明显更强(长/复杂 query) |
+
+- **决定性差异是「输入长度」而非「质量分」**:wiki 蒸馏页偏长,bge-small 512 token 上限会**静默截断**长 chunk;当前 `target_chars=800` 大体在限内,但调大 chunk 或含长表格/清单时会丢尾部。bge-m3 的 8192 上限免疫此问题。
+- **m3 的 sparse 与自建混合检索重叠**:统一链路需改 `embedder`/`search` 融合逻辑并引入 `FlagEmbedding`,与 KISS 冲突,本轮不为 sparse 上 m3。
+- **CPU 代价真实**:560M 模型单条 query 编码从几十 ms 升到数百 ms 量级,建库变慢;2.2GB 模型还要走国内下载老路。
+
+**结论(锚定 T7,不凭感觉)**:本轮维持 bge-small。顺序仍为 **T6→T7→用同一评测集对比 small / m3 / +reranker**。经验上「small + reranker(T2)」通常优于「直接换 m3 无重排」,故 m3 优先级排在 T2 之后。唯一提前考虑 m3 的信号:T6 后发现 wiki 页普遍 >512 token 且须整页/大块检索——此时是「长度需求」逼上 m3,可只换 m3 的 dense(经 sentence-transformers 加载,改动小),先不碰 sparse/ColBERT。
+
 ---
 
 ## T2. 加入本地 reranker(进一步提准)— 暂缓(看本轮效果再定)
