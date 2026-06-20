@@ -26,6 +26,10 @@ class ChromaVectorStore:
                 "title_path": chunk["title_path"],
                 "char_count": int(chunk["char_count"]),
                 "chunk_index": int(chunk["chunk_index"]),
+                "domain": chunk.get("domain", ""),
+                "type": chunk.get("type", ""),
+                "evidence_level": chunk.get("evidence_level", ""),
+                "freshness": chunk.get("freshness", ""),
             }
             for chunk in chunks
         ]
@@ -36,10 +40,16 @@ class ChromaVectorStore:
             metadatas=metadatas,
         )
 
-    def search(self, query_embedding: list[float], top_k: int = 5) -> list[dict]:
+    def search(
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
+        where: dict | None = None,
+    ) -> list[dict]:
         response = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=top_k,
+            where=where,
             include=["documents", "metadatas", "distances"],
         )
 
@@ -57,6 +67,10 @@ class ChromaVectorStore:
                     "file_path": metadata.get("file_path", ""),
                     "title_path": metadata.get("title_path", ""),
                     "char_count": metadata.get("char_count", 0),
+                    "domain": metadata.get("domain", ""),
+                    "type": metadata.get("type", ""),
+                    "evidence_level": metadata.get("evidence_level", ""),
+                    "freshness": metadata.get("freshness", ""),
                     "content": content,
                     "score": score,
                 }
