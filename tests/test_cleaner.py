@@ -32,3 +32,17 @@ def test_cleaner_removes_url_noise_but_keeps_link_text() -> None:
     assert "图表说明" in cleaned
     assert "https://example.com" not in cleaned
     assert "[ref]:" not in cleaned
+
+
+def test_cleaner_strips_wikilinks_to_text() -> None:
+    text = (
+        "见 [[companies/600519|贵州茅台]] 与 [[industries/白酒]] "
+        "和 [[牧原股份]] 以及 [[sources/]]。"
+    )
+    cleaned = clean_markdown(text)
+    assert "贵州茅台" in cleaned
+    assert "白酒" in cleaned
+    assert "牧原股份" in cleaned
+    assert "sources" in cleaned
+    assert "[[" not in cleaned
+    assert "companies/600519" not in cleaned
