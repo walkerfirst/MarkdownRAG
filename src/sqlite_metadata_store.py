@@ -27,7 +27,12 @@ class SQLiteMetadataStore(MetadataStore):
                     last_modified REAL NOT NULL,
                     last_ingested_at TEXT NOT NULL,
                     status TEXT NOT NULL,
-                    chunk_count INTEGER NOT NULL DEFAULT 0
+                    chunk_count INTEGER NOT NULL DEFAULT 0,
+                    domain TEXT NOT NULL DEFAULT '',
+                    type TEXT NOT NULL DEFAULT '',
+                    evidence_level TEXT NOT NULL DEFAULT '',
+                    freshness TEXT NOT NULL DEFAULT '',
+                    last_updated TEXT NOT NULL DEFAULT ''
                 );
 
                 CREATE TABLE IF NOT EXISTS chunks (
@@ -38,6 +43,10 @@ class SQLiteMetadataStore(MetadataStore):
                     char_count INTEGER NOT NULL,
                     chunk_index INTEGER NOT NULL,
                     created_at TEXT NOT NULL,
+                    domain TEXT NOT NULL DEFAULT '',
+                    type TEXT NOT NULL DEFAULT '',
+                    evidence_level TEXT NOT NULL DEFAULT '',
+                    freshness TEXT NOT NULL DEFAULT '',
                     FOREIGN KEY(file_path) REFERENCES documents(file_path)
                 );
 
@@ -59,15 +68,21 @@ class SQLiteMetadataStore(MetadataStore):
                 """
                 INSERT INTO documents (
                     file_path, file_name, content_hash, last_modified,
-                    last_ingested_at, status, chunk_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    last_ingested_at, status, chunk_count,
+                    domain, type, evidence_level, freshness, last_updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(file_path) DO UPDATE SET
                     file_name = excluded.file_name,
                     content_hash = excluded.content_hash,
                     last_modified = excluded.last_modified,
                     last_ingested_at = excluded.last_ingested_at,
                     status = excluded.status,
-                    chunk_count = excluded.chunk_count
+                    chunk_count = excluded.chunk_count,
+                    domain = excluded.domain,
+                    type = excluded.type,
+                    evidence_level = excluded.evidence_level,
+                    freshness = excluded.freshness,
+                    last_updated = excluded.last_updated
                 """,
                 (
                     document["file_path"],
@@ -77,6 +92,11 @@ class SQLiteMetadataStore(MetadataStore):
                     document["last_ingested_at"],
                     document["status"],
                     document["chunk_count"],
+                    document.get("domain", ""),
+                    document.get("type", ""),
+                    document.get("evidence_level", ""),
+                    document.get("freshness", ""),
+                    document.get("last_updated", ""),
                 ),
             )
 
@@ -99,15 +119,20 @@ class SQLiteMetadataStore(MetadataStore):
                 """
                 INSERT INTO chunks (
                     chunk_id, file_path, title_path, content,
-                    char_count, chunk_index, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    char_count, chunk_index, created_at,
+                    domain, type, evidence_level, freshness
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(chunk_id) DO UPDATE SET
                     file_path = excluded.file_path,
                     title_path = excluded.title_path,
                     content = excluded.content,
                     char_count = excluded.char_count,
                     chunk_index = excluded.chunk_index,
-                    created_at = excluded.created_at
+                    created_at = excluded.created_at,
+                    domain = excluded.domain,
+                    type = excluded.type,
+                    evidence_level = excluded.evidence_level,
+                    freshness = excluded.freshness
                 """,
                 [
                     (
@@ -118,6 +143,10 @@ class SQLiteMetadataStore(MetadataStore):
                         chunk["char_count"],
                         chunk["chunk_index"],
                         chunk["created_at"],
+                        chunk.get("domain", ""),
+                        chunk.get("type", ""),
+                        chunk.get("evidence_level", ""),
+                        chunk.get("freshness", ""),
                     )
                     for chunk in chunks
                 ],
@@ -141,20 +170,35 @@ class SQLiteMetadataStore(MetadataStore):
         chunk_map = {row["chunk_id"]: dict(row) for row in rows}
         return [chunk_map[chunk_id] for chunk_id in chunk_ids if chunk_id in chunk_map]
 
-    def search_chunks_by_keywords(self, keywords: list[str], limit: int = 20) -> list[dict]:
+    def search_chunks_by_keywords(
+        self,
+        keywords: list[str],
+        limit: int = 20,
+        domain: str | None = None,
+        note_type: str | None = None,
+    ) -> list[dict]:
+        """关键词搜索，支持 domain/note_type 精确等值过滤（note_type 对应 type 列）。"""
         keywords = [keyword.strip() for keyword in keywords if keyword.strip()]
         if not keywords:
             return []
 
-        clauses: list[str] = []
+        kw_clauses: list[str] = []
         params: list[str] = []
         for keyword in keywords:
-            clauses.append("(content LIKE ? OR title_path LIKE ?)")
+            kw_clauses.append("(content LIKE ? OR title_path LIKE ?)")
             params.extend([f"%{keyword}%", f"%{keyword}%"])
+
+        where = f"({' OR '.join(kw_clauses)})"
+        if domain:
+            where += " AND domain = ?"
+            params.append(domain)
+        if note_type:
+            where += " AND type = ?"
+            params.append(note_type)
 
         sql = f"""
             SELECT * FROM chunks
-            WHERE {" OR ".join(clauses)}
+            WHERE {where}
             ORDER BY file_path, chunk_index
             LIMIT ?
         """
