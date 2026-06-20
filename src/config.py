@@ -23,9 +23,8 @@ def load_config(config_path: str = "config.yaml") -> dict[str, Any]:
 
     config["root_dir"] = str(config_file.parent)
     paths = config.setdefault("paths", {})
-    required_dirs = ("notes_dir", "chroma_dir", "processed_dir")
 
-    for key in required_dirs:
+    for key in ("chroma_dir", "processed_dir"):
         path = resolve_path(config["root_dir"], paths[key])
         path.mkdir(parents=True, exist_ok=True)
 
@@ -34,5 +33,16 @@ def load_config(config_path: str = "config.yaml") -> dict[str, Any]:
 
     eval_queries = resolve_path(config["root_dir"], paths["eval_queries"])
     eval_queries.parent.mkdir(parents=True, exist_ok=True)
+
+    sources = config.get("sources") or []
+    if not sources:
+        raise ValueError("config 缺少 sources(至少一个 {path, domain})")
+    for source in sources:
+        source_path = Path(source["path"])
+        if not source_path.exists():
+            raise FileNotFoundError(f"source 路径不存在: {source_path}")
+
+    config.setdefault("exclude_names", [])
+    config.setdefault("exclude_dirs", [])
 
     return config
