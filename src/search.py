@@ -48,6 +48,10 @@ def _keyword_results(chunks: list[dict], keywords: list[str]) -> list[dict]:
                 "file_path": chunk["file_path"],
                 "title_path": chunk.get("title_path", ""),
                 "char_count": chunk.get("char_count", len(chunk.get("content", ""))),
+                "domain": chunk.get("domain", ""),
+                "type": chunk.get("type", ""),
+                "evidence_level": chunk.get("evidence_level", ""),
+                "freshness": chunk.get("freshness", ""),
                 "content": chunk["content"],
                 "score": score,
             }
@@ -93,6 +97,9 @@ def search_chunks(
     top_k: int | None = None,
     min_score: float | None = None,
     relative_score_ratio: float | None = None,
+    domain: str | None = None,
+    type: str | None = None,
+    evidence: str | None = None,
     embedder: LocalEmbedder | None = None,
     vector_store: ChromaVectorStore | None = None,
     metadata_store: MetadataStore | None = None,
@@ -115,15 +122,36 @@ def search_chunks(
     vector_store = vector_store or ChromaVectorStore(str(chroma_dir))
     metadata_store = metadata_store or SQLiteMetadataStore(str(metadata_db))
 
+    # 构造 Chroma where 过滤条件:domain/type 各一个等值条件
+    conditions = []
+    if domain:
+        conditions.append({"domain": domain})
+    if type:
+        conditions.append({"type": type})
+    if len(conditions) == 1:
+        where = conditions[0]
+    elif len(conditions) > 1:
+        where = {"$and": conditions}
+    else:
+        where = None
+
     query_embedding = embedder.embed_query(query)
-    vector_results = vector_store.search(query_embedding, top_k=max(top_k * 3, top_k))
+    vector_results = vector_store.search(query_embedding, top_k=max(top_k * 3, top_k), where=where)
 
     keywords = extract_query_keywords(query)
     keyword_chunks = metadata_store.search_chunks_by_keywords(
         keywords,
         limit=config["search"].get("keyword_top_k", top_k * 4),
+        domain=domain,
+        note_type=type,
     )
     merged = _merge_results(vector_results, _keyword_results(keyword_chunks, keywords))
+
+    # evidence 大小写不敏感子串后过滤,在 _merge_results 之后、_filter_results 之前
+    if evidence:
+        needle = evidence.lower()
+        merged = [r for r in merged if needle in (r.get("evidence_level") or "").lower()]
+
     return _filter_results(
         merged,
         min_score=min_score,
@@ -157,10 +185,16 @@ def main(
     query: str = typer.Argument(..., help="检索问题"),
     top_k: int = typer.Option(None, "--top-k", help="返回结果数量"),
     min_score: float | None = typer.Option(None, "--min-score", help="最低相似度分数"),
+    domain: str | None = typer.Option(None, "--domain", help="按 domain 过滤(stock/study)"),
+    type: str | None = typer.Option(None, "--type", help="按 type 过滤(companies/industries…)"),
+    evidence: str | None = typer.Option(None, "--evidence", help="按证据级别子串过滤(Primary/Secondary…)"),
 ) -> None:
     try:
         config = load_config()
-        results = search_chunks(query=query, top_k=top_k, min_score=min_score)
+        results = search_chunks(
+            query=query, top_k=top_k, min_score=min_score,
+            domain=domain, type=type, evidence=evidence,
+        )
         render_results(query, results, preview_chars=config["search"]["preview_chars"])
     except Exception as exc:  # pragma: no cover - CLI 错误出口
         console.print(f"[red]search 失败: {exc}[/red]")
