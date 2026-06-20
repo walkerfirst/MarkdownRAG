@@ -2,7 +2,7 @@
 
 > 用途:列出后续要做的更新,采用「任务 + 验收」格式,供审阅与讨论。
 > 状态约定:`待审阅` = 方案待你确认;`已确认` = 可动手;`已完成` = 做完并通过验收。
-> **本轮 T0 + T5 + T1 + 前置配置 已完成并验证(2026-06-15)。后续顺序:T6 → T7 → T2 → T3(原 T4 已并入 T6)。**
+> **本轮 T0 + T5 + T1 + 前置配置 已完成并验证(2026-06-15)。T6 已完成并验证(2026-06-20)。后续顺序:T7 → T2 → T3(原 T4 已并入 T6)。**
 
 ## 执行记录与环境备忘(本轮已完成)
 
@@ -226,7 +226,12 @@ NotebookLM 的不可替代优势(作为补充):**音频/视频概览、幻灯片
 
 ---
 
-## T6. 多源 wiki + 分类与元数据过滤检索(草案;原 T4 并入)
+## T6. 多源 wiki + 分类与元数据过滤检索(已完成 2026-06-20;原 T4 并入)
+
+> **完成记录(2026-06-20)**:设计/计划见 `docs/superpowers/specs/2026-06-20-t6-multi-source-wiki-design.md` 与 `docs/superpowers/plans/2026-06-20-t6-multi-source-wiki.md`。
+> - `notes_dir` → `sources` 列表;`file_path` 加 `domain/` 前缀防跨源撞名;`type` 自动取子目录;页头 bold-key 抽 `evidence_level`/`freshness`/`last_updated`,Summary 保留进向量、Sources 丢弃;`[[链接]]` 清成文字;排除 index.md/log.md/templates/。
+> - 字段冗余落到 chunk(SQLite + Chroma metadata),无需多 collection。检索 `--domain`/`--type` 入检索层(Chroma where + SQL),`--evidence` 子串后过滤。
+> - **实测**:`--reset` 重建,扫描 89 → 入库 79(stock 49 + study 30;index/log/templates 全部排除生效)。`pytest` 26 passed。抽样:`--domain stock --type companies` 只返回该类;`--evidence Primary` 12→10 剔除非 Primary;Summary 文本可检索命中、chunk 正文无 `**Sources**`/`**Evidence level**` 残留。
 
 **目标**:支持多个 `wiki/` 根目录(取代单一 `notes_dir`);按路径自动分类(domain 手填、type 自动取子目录)+ 抽取 wiki 页头部元数据,检索可按这些维度过滤。
 > **原 T4 已并入**:T4 的"解析 YAML frontmatter tags"方向**作废**——wiki 页用的是 **bold-key 元数据**(`**Evidence level**:`、`**Freshness**:`、`**Sources**:`),不是 YAML;改为抽取这些字段。
