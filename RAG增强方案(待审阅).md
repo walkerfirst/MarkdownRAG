@@ -229,7 +229,8 @@ NotebookLM 的不可替代优势(作为补充):**音频/视频概览、幻灯片
 ## T6. 多源 wiki + 分类与元数据过滤检索(已完成 2026-06-20;原 T4 并入)
 
 > **完成记录(2026-06-20)**:设计/计划见 `docs/superpowers/specs/2026-06-20-t6-multi-source-wiki-design.md` 与 `docs/superpowers/plans/2026-06-20-t6-multi-source-wiki.md`。
-> - `notes_dir` → `sources` 列表;`file_path` 加 `domain/` 前缀防跨源撞名;`type` 自动取子目录;页头 bold-key 抽 `evidence_level`/`freshness`/`last_updated`,Summary 保留进向量、Sources 丢弃;`[[链接]]` 清成文字;排除 index.md/log.md/templates/。
+> - `notes_dir` → `sources` 列表;`file_path` 加 `domain/` 前缀防跨源撞名;`type` 自动取子目录;页头 bold-key 抽 `evidence_level`/`freshness`/`last_updated`,Summary 保留进向量、Sources 丢弃;`[[链接]]` 清成文字。
+> - **排除策略(2026-06-20 修订)**:仅排除 `log.md`(操作日志)与 `templates/`(空模板);`index.md` **改为纳入**——带注释的 index 是全库地图,概览/定位类查询里常是唯一能一页答全的命中(根级无子目录,`type=""`)。
 > - 字段冗余落到 chunk(SQLite + Chroma metadata),无需多 collection。检索 `--domain`/`--type` 入检索层(Chroma where + SQL),`--evidence` 子串后过滤。
 > - **实测**:`--reset` 重建,扫描 89 → 入库 79(stock 49 + study 30;index/log/templates 全部排除生效)。`pytest` 26 passed。抽样:`--domain stock --type companies` 只返回该类;`--evidence Primary` 12→10 剔除非 Primary;Summary 文本可检索命中、chunk 正文无 `**Sources**`/`**Evidence level**` 残留。
 
