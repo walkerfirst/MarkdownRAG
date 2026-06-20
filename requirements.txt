@@ -1,8 +1,0 @@
-chromadb
-sentence-transformers
-markdown-it-py
-pyyaml
-rich
-typer
-tqdm
-pytest

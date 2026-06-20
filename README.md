@@ -25,10 +25,8 @@ pip install -r requirements.txt
 
 ```text
 MarkdownRAG/
-├── BUILD.md
 ├── README.md
 ├── config.yaml
-├── requirements.txt
 ├── eval/
 │   └── queries.yaml
 ├── notes/

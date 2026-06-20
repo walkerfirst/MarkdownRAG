@@ -40,10 +40,17 @@ class _HashingEncoder:
 
 
 class LocalEmbedder:
-    def __init__(self, model_name: str, model: Any | None = None, use_fallback: bool = True):
+    def __init__(
+        self,
+        model_name: str,
+        model: Any | None = None,
+        use_fallback: bool = True,
+        query_instruction: str = "",
+    ):
         self.model_name = model_name
         self._model = model
         self.backend = "sentence-transformers"
+        self.query_instruction = query_instruction or ""
 
         if self._model is None:
             try:
@@ -64,10 +71,14 @@ class LocalEmbedder:
         if not texts:
             return []
         normalized = [text.strip() if text and text.strip() else " " for text in texts]
-        embeddings = self._model.encode(normalized)
+        if self.backend == "sentence-transformers":
+            embeddings = self._model.encode(normalized, normalize_embeddings=True)
+        else:
+            embeddings = self._model.encode(normalized)
         if hasattr(embeddings, "tolist"):
             return embeddings.tolist()
         return [list(vector) for vector in embeddings]
 
     def embed_query(self, query: str) -> list[float]:
-        return self.embed_texts([query])[0]
+        text = f"{self.query_instruction}{query}" if self.query_instruction else query
+        return self.embed_texts([text])[0]

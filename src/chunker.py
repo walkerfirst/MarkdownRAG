@@ -145,7 +145,7 @@ def chunk_markdown(
                 for part in _split_long_text(content, max_chars):
                     results.append(
                         {
-                            "chunk_id": f"{file_name}::{chunk_index:04d}",
+                            "chunk_id": f"{file_path}::{chunk_index:04d}",
                             "file_path": file_path,
                             "title_path": title_path,
                             "content": part.strip(),
@@ -158,7 +158,7 @@ def chunk_markdown(
 
             results.append(
                 {
-                    "chunk_id": f"{file_name}::{chunk_index:04d}",
+                    "chunk_id": f"{file_path}::{chunk_index:04d}",
                     "file_path": file_path,
                     "title_path": title_path,
                     "content": content,

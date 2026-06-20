@@ -108,7 +108,10 @@ def search_chunks(
     chroma_dir = resolve_path(config["root_dir"], config["paths"]["chroma_dir"])
     metadata_db = resolve_path(config["root_dir"], config["paths"]["metadata_db"])
 
-    embedder = embedder or LocalEmbedder(config["embedding"]["model_name"])
+    embedder = embedder or LocalEmbedder(
+        config["embedding"]["model_name"],
+        query_instruction=config["embedding"].get("query_instruction", ""),
+    )
     vector_store = vector_store or ChromaVectorStore(str(chroma_dir))
     metadata_store = metadata_store or SQLiteMetadataStore(str(metadata_db))
 

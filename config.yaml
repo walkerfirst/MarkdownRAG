@@ -2,7 +2,7 @@ project:
   name: local-md-rag
 
 paths:
-  notes_dir: notes
+  notes_dir: /home/neo/project/notes/
   chroma_dir: data/chroma
   processed_dir: data/processed
   metadata_db: data/metadata.sqlite
@@ -10,7 +10,10 @@ paths:
 
 embedding:
   provider: sentence_transformers
-  model_name: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+  # BAAI/bge-small-zh-v1.5 的本地副本(国内 HF 客户端下载不稳,改走本地目录)
+  model_name: models/bge-small-zh-v1.5
+  # bge-*-zh-v1.5 非对称检索:query 加指令前缀,passage 不加。留空即关闭。
+  query_instruction: "为这个句子生成表示以用于检索相关文章："
 
 chunking:
   target_chars: 800
