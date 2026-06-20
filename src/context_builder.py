@@ -81,6 +81,9 @@ def main(
     output: str = typer.Option(DEFAULT_CONTEXT_FILE, "--output", help="临时上下文文件，默认覆盖 context.md"),
     stdout: bool = typer.Option(False, "--stdout", help="输出到 stdout，用于管道传递"),
     save_history: bool = typer.Option(False, "--save-analysis", help="另存一份到 research_outputs/"),
+    domain: str | None = typer.Option(None, "--domain", help="按 domain 过滤"),
+    type: str | None = typer.Option(None, "--type", help="按 type 过滤"),
+    evidence: str | None = typer.Option(None, "--evidence", help="按证据级别子串过滤"),
 ) -> None:
     try:
         results = search_chunks(
@@ -88,6 +91,9 @@ def main(
             top_k=top_k,
             min_score=min_score,
             relative_score_ratio=relative_score_ratio,
+            domain=domain,
+            type=type,
+            evidence=evidence,
         )
         context = build_context(results=results, query=query, max_chars=max_chars)
         if stdout:

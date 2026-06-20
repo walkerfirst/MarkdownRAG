@@ -48,3 +48,28 @@ def test_save_analysis_writes_research_outputs_file(tmp_path: Path) -> None:
     assert analysis_path.parent.name == "research_outputs"
     assert analysis_path.name.startswith("analysis_")
     assert analysis_path.read_text(encoding="utf-8") == "分析内容"
+
+
+def test_context_cli_passes_filters(monkeypatch, tmp_path) -> None:
+    """验证 CLI 的 --domain/--type/--evidence 选项透传给 search_chunks"""
+    import src.context_builder as cb
+
+    captured = {}
+
+    def fake_search(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(cb, "search_chunks", fake_search)
+    from typer.testing import CliRunner
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cb.app,
+        ["测试", "--domain", "stock", "--type", "companies", "--evidence", "Primary",
+         "--stdout"],
+    )
+    assert result.exit_code == 0
+    assert captured["domain"] == "stock"
+    assert captured["type"] == "companies"
+    assert captured["evidence"] == "Primary"
