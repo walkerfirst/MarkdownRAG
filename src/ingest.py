@@ -50,7 +50,6 @@ def ingest_project(
         _reset_cache(config)
         config = load_config(config_path)
 
-    notes_dir = resolve_path(config["root_dir"], config["paths"]["notes_dir"])
     chroma_dir = resolve_path(config["root_dir"], config["paths"]["chroma_dir"])
     processed_dir = resolve_path(config["root_dir"], config["paths"]["processed_dir"])
     metadata_db = resolve_path(config["root_dir"], config["paths"]["metadata_db"])
@@ -60,7 +59,12 @@ def ingest_project(
     vector_store = vector_store or ChromaVectorStore(str(chroma_dir))
     lazy_embedder = embedder
 
-    files = load_markdown_files(str(notes_dir))
+    # 从 config["sources"] 多源加载，支持 exclude_names/exclude_dirs 过滤
+    files = load_markdown_files(
+        config["sources"],
+        exclude_names=config.get("exclude_names", []),
+        exclude_dirs=config.get("exclude_dirs", []),
+    )
     existing_documents = {
         document["file_path"]: document for document in metadata_store.list_documents()
     }
@@ -110,6 +114,11 @@ def ingest_project(
 
         for chunk in chunks:
             chunk["created_at"] = _utc_now()
+            # 注入分类字段，来源于 loader 解析的 item 元数据
+            chunk["domain"] = item["domain"]
+            chunk["type"] = item["type"]
+            chunk["evidence_level"] = item["evidence_level"]
+            chunk["freshness"] = item["freshness"]
 
         if chunks:
             if lazy_embedder is None:
@@ -129,6 +138,11 @@ def ingest_project(
                 "last_ingested_at": _utc_now(),
                 "status": "indexed" if chunks else "empty",
                 "chunk_count": len(chunks),
+                "domain": item["domain"],
+                "type": item["type"],
+                "evidence_level": item["evidence_level"],
+                "freshness": item["freshness"],
+                "last_updated": item["last_updated"],
             }
         )
 

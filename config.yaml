@@ -1,8 +1,15 @@
 project:
   name: local-md-rag
 
+sources:
+  - path: /home/neo/Documents/obsidian/investing/wiki/
+    domain: stock
+  - path: /home/neo/Documents/obsidian/learning/wiki/
+    domain: study
+exclude_names: [index.md, log.md]
+exclude_dirs: [templates]
+
 paths:
-  notes_dir: /home/neo/project/notes/
   chroma_dir: data/chroma
   processed_dir: data/processed
   metadata_db: data/metadata.sqlite
