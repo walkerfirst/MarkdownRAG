@@ -6,7 +6,7 @@ sources:
     domain: stock
   - path: /home/neo/Documents/obsidian/learning/wiki/
     domain: study
-exclude_names: [index.md, log.md]
+exclude_names: [log.md]
 exclude_dirs: [templates]
 
 paths:
