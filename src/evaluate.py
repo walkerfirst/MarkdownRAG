@@ -63,6 +63,10 @@ def main() -> None:
         raise typer.Exit(code=1) from exc
 
     console.print("Evaluation result:")
+    for detail in summary["details"]:
+        mark = "[green]PASS[/green]" if detail["passed"] else "[red]FAIL[/red]"
+        flags = f"file={'ok' if detail['file_ok'] else 'x'} kw={'ok' if detail['keyword_ok'] else 'x'}"
+        console.print(f"  {mark} ({flags}) {detail['query']}")
     console.print(f"Total queries: {summary['total']}")
     console.print(f"Passed: {summary['passed']}")
     console.print(f"Failed: {summary['failed']}")

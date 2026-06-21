@@ -13,7 +13,7 @@ paths:
   chroma_dir: data/chroma
   processed_dir: data/processed
   metadata_db: data/metadata.sqlite
-  eval_queries: eval/queries.yaml
+  eval_queries: eval/queries.wiki.yaml
 
 embedding:
   provider: sentence_transformers

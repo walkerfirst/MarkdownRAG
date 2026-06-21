@@ -1,0 +1,184 @@
+# 真实 wiki 评测集(T7)
+# 每条:query + expected_files(命中其一即 file_ok)+ expected_keywords(全部出现在 top_k 召回文本即 keyword_ok)
+# expected_files 用 T6 的 domain/ 前缀路径;keywords 取自目标页正文实际词汇。
+# 覆盖 type:companies/industries/portfolio/decisions/playbooks/checklists(stock)+ concepts/entities/synthesis(study)
+# 覆盖 evidence_level:Primary / Secondary / Market view / User view / Unverified
+
+queries:
+  # —— stock: companies ——
+  - query: "牧原股份 2025 年营业收入和归母净利润"
+    expected_files:
+      - "stock/companies/002714-financials.md"
+      - "stock/companies/002714-annual-report-2025fy.md"
+    expected_keywords:
+      - "牧原股份"
+      - "营业收入"
+      - "归母净利润"
+
+  - query: "山西证券 贵州茅台 研报 评级"
+    expected_files:
+      - "stock/companies/600519-research-report-2026-04-28-shanxi-securities.md"
+      - "stock/companies/600519-analyst-views.md"
+    expected_keywords:
+      - "山西证券"
+      - "买入"
+      - "渠道重构"
+
+  - query: "信立泰 JK07 临床疗效风险"
+    expected_files:
+      - "stock/companies/002294-risk-factors.md"
+    expected_keywords:
+      - "JK07"
+      - "临床"
+      - "心衰"
+
+  - query: "牧原股份 风险 疫病 生猪价格"
+    expected_files:
+      - "stock/companies/002714-risk-factors.md"
+    expected_keywords:
+      - "非洲猪瘟"
+      - "疫病"
+      - "生猪价格"
+
+  # —— stock: industries ——
+  - query: "生猪养殖 代养模式 产能去化 屠宰量"
+    expected_files:
+      - "stock/industries/hog-farming-recent-developments.md"
+    expected_keywords:
+      - "代养"
+      - "产能去化"
+      - "屠宰量"
+
+  # —— stock: portfolio ——
+  - query: "当前持仓 牧原 温氏 仓位"
+    expected_files:
+      - "stock/portfolio/current-positions.md"
+    expected_keywords:
+      - "持仓"
+      - "牧原股份"
+      - "温氏股份"
+
+  # —— stock: decisions ——
+  - query: "牧原 决策 继续持有 猪周期"
+    expected_files:
+      - "stock/decisions/002714-decisions.md"
+    expected_keywords:
+      - "继续持有"
+      - "猪周期"
+      - "牧原股份"
+
+  # —— stock: playbooks ——
+  - query: "价值投资 安全边际 能力圈 框架"
+    expected_files:
+      - "stock/playbooks/value-investing-framework.md"
+    expected_keywords:
+      - "价值投资"
+      - "安全边际"
+      - "能力圈"
+
+  # —— stock: checklists ——
+  - query: "投资检查清单 能力圈 风险"
+    expected_files:
+      - "stock/checklists/investment-checklist.md"
+    expected_keywords:
+      - "Checklist"
+      - "能力圈"
+      - "风险"
+
+  # —— study: concepts ——
+  - query: "量化投资 数学模型 数据护城河"
+    expected_files:
+      - "study/concepts/量化投资.md"
+    expected_keywords:
+      - "量化投资"
+      - "数学模型"
+      - "护城河"
+
+  - query: "有效市场假说 EMH 西蒙斯 反例"
+    expected_files:
+      - "study/concepts/有效市场假说.md"
+    expected_keywords:
+      - "有效市场假说"
+      - "EMH"
+      - "西蒙斯"
+
+  # —— study: entities ——
+  - query: "詹姆斯·西蒙斯 大奖章基金 文艺复兴科技"
+    expected_files:
+      - "study/entities/詹姆斯·西蒙斯.md"
+      - "study/entities/文艺复兴科技公司.md"
+    expected_keywords:
+      - "大奖章"
+      - "文艺复兴"
+      - "西蒙斯"
+
+  # —— study: synthesis ——
+  - query: "成功 长期主义 复利 根本学科"
+    expected_files:
+      - "study/synthesis/成功与长期主义.md"
+    expected_keywords:
+      - "长期复利"
+      - "根本学科"
+      - "马斯克"
+
+  - query: "本机存储 备份 同步 WebDAV rclone"
+    expected_files:
+      - "study/synthesis/存储备份与同步.md"
+      - "study/sources/Rclone同步GoogleDrive.md"
+      - "study/sources/WebDAV配置笔记.md"
+    expected_keywords:
+      - "WebDAV"
+      - "rclone"
+      - "Samba"
+
+  - query: "网络代理 科学上网 sing-box 节点"
+    expected_files:
+      - "study/synthesis/网络代理.md"
+      - "study/sources/Sing-box节点搭建.md"
+    expected_keywords:
+      - "代理"
+      - "sing-box"
+      - "订阅"
+
+  # —— study: concepts ——
+  - query: "LLM Wiki 知识库 复利 与 RAG 的区别"
+    expected_files:
+      - "study/concepts/LLM-Wiki.md"
+    expected_keywords:
+      - "Karpathy"
+      - "复利"
+      - "RAG"
+
+  # —— study: entities ——
+  - query: "马斯克 xAI 技术奇点 AGI"
+    expected_files:
+      - "study/entities/埃隆·马斯克.md"
+    expected_keywords:
+      - "马斯克"
+      - "xAI"
+      - "奇点"
+
+  # —— study: sources(运维/工具 how-to)——
+  - query: "Samba 局域网文件共享 配置"
+    expected_files:
+      - "study/sources/Samba配置笔记.md"
+    expected_keywords:
+      - "Samba"
+      - "共享"
+      - "Windows"
+
+  - query: "fcitx5 Wayland 中文输入法 修复"
+    expected_files:
+      - "study/sources/fcitx5输入法修复.md"
+    expected_keywords:
+      - "fcitx5"
+      - "Wayland"
+      - "输入法"
+
+  - query: "uv Python 虚拟环境 依赖管理"
+    expected_files:
+      - "study/sources/uv新手指南.md"
+    expected_keywords:
+      - "uv"
+      - "虚拟环境"
+      - "依赖"

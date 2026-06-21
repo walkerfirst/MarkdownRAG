@@ -2,7 +2,8 @@
 
 > 用途:列出后续要做的更新,采用「任务 + 验收」格式,供审阅与讨论。
 > 状态约定:`待审阅` = 方案待你确认;`已确认` = 可动手;`已完成` = 做完并通过验收。
-> **本轮 T0 + T5 + T1 + 前置配置 已完成并验证(2026-06-15)。T6 已完成并验证(2026-06-20)。后续顺序:T7 → T2 → T3(原 T4 已并入 T6)。**
+> **本轮 T0 + T5 + T1 + 前置配置 已完成并验证(2026-06-15)。T6 + T7 已完成并验证(2026-06-20)。后续顺序:T2 → T3(原 T4 已并入 T6)。**
+> **数据源路径已迁移(2026-06-20):`/home/neo/project/notes/{investment,learning}/wiki/`。**
 
 ## 执行记录与环境备忘(本轮已完成)
 
@@ -270,7 +271,14 @@ sources:
 
 ---
 
-## T7. 真实 wiki 评测集(新增,前置于 T2)
+## T7. 真实 wiki 评测集(已完成 2026-06-20,前置于 T2)
+
+> **完成记录(2026-06-20)**:`eval/queries.wiki.yaml` 共 **20 条**真实问题(stock 9 / study 11,贴合语料 50:62);`config.yaml` 的 `eval_queries` 指向它;`evaluate.py` 补每条 pass/fail 明细;`tests/test_evaluate.py` 做 schema 自检。
+> - **基线命中率 50%(10/20)**,作为 T2 reranker 前后对比的锚。
+> - 通过集中在单主题独立页(财报/概念/人物/工具 how-to);**10 条失败 = 真实弱点谱**:精确页淹没在同公司兄弟页、短决策页排不上、synthesis/行业页输给其构成页、entity 输给概念碎片、**study 查询被更大的 stock 语料跨域污染**。
+> - 关键发现:`Samba`/`LLM-Wiki` 等 study 查询不加过滤时被 stock 页淹没;`--domain study` 能救回 `LLM-Wiki`(升 top-2)但救不回 `Samba`(域内仍排不上,真弱点)→ 印证 T6 `--domain` 过滤的价值 + T2 reranker 的必要性。
+> - `expected_files` 放宽纪律:仅当被召回页本身是该问题的好答案(年报答营收、Sing-box 页答 sing-box 搭建)才纳入;只答局部或跨域的不放宽,保留为真失败。
+> - 旧 `eval/queries.yaml`(绑已不存在的 sample 笔记)弃用、留档不动。
 
 **目标**:`eval/queries.yaml` 现绑定玩具样例笔记;切到 wiki corpus 后无法量化检索质量,T2 reranker 的验收("evaluate ≥ T1")失去依据。先建一份真实评测集做锚。
 
