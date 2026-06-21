@@ -64,7 +64,7 @@ def search_notes(query: str, domain: str | None = None, top_k: int = 5) -> list[
         reranker=None,  # 多轮场景不开 reranker(每轮 ~28s 不可接受),走快的混合检索
     )
     return [
-        {"title": r["title"], "file_path": r["file_path"],
+        {"title": r["title_path"], "file_path": r["file_path"],
          "score": round(r["score"], 4), "content": r["content"]}
         for r in results
     ]
