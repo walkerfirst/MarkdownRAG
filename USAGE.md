@@ -58,9 +58,10 @@ env HF_HUB_OFFLINE=1 .venv/bin/python -m src.search "价值投资 安全边际" 
 默认走「向量+关键词」混合检索,秒回。CLI 默认全库检索;加 `--domain stock/study`(或 `--type`、`--evidence`)按库/类型过滤,贴合「投资走 stock、学习走 study」的真实用法。需要更高准确率时,把 `config.yaml` 的 `reranker.enabled` 改 `true` 开交叉编码器重排(域内命中 55%→80%),代价是单 query CPU **~28s**;查完记得改回 `false`。
 
 ### 3. 生成 LLM 上下文(喂给 Codex/Claude)
+两种方式:默认**写文件**让 AI 读;加 `--stdout` 才**走管道**(不加则 stdout 为空,管道收到空输入)。
 ```fish
-env HF_HUB_OFFLINE=1 .venv/bin/python -m src.context_builder "牧原股份 护城河"   # 写到 context.md
-env HF_HUB_OFFLINE=1 .venv/bin/python -m src.context_builder "贵州茅台 i茅台" | codex exec "基于资料做价值投资分析"
+env HF_HUB_OFFLINE=1 .venv/bin/python -m src.context_builder "牧原股份 护城河"                    # 默认写到 context.md,再让 AI 读该文件
+env HF_HUB_OFFLINE=1 .venv/bin/python -m src.context_builder "贵州茅台 i茅台" --stdout | codex exec "基于资料做价值投资分析"
 ```
 
 ### 4. 自检

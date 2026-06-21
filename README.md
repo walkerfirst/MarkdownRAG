@@ -123,10 +123,10 @@ uv run python -m src.context_builder "贵州茅台 经销商 i茅台" --output c
 
 ## 与 Codex CLI 对接
 
-标准输出管道方式：
+标准输出管道方式（必须加 `--stdout`，否则默认写文件、管道收到空输入）：
 
 ```bash
-uv run python -m src.context_builder "牧原股份 屠宰业务 护城河" | codex exec "基于输入资料，做价值投资分析"
+uv run python -m src.context_builder "牧原股份 屠宰业务 护城河" --stdout | codex exec "基于输入资料，做价值投资分析"
 ```
 
 文件方式：
@@ -151,8 +151,8 @@ uv run pytest
 
 ## 大模型调用（以codex为例）
 方案 1：管道直传给 Codex CLI
-让你的 RAG 输出上下文，然后通过 stdin 交给 Codex：
-``` python -m src.context_builder "牧原股份 屠宰业务 护城河" \
+让你的 RAG 输出上下文，然后通过 stdin 交给 Codex（管道必须加 `--stdout`）：
+``` python -m src.context_builder "牧原股份 屠宰业务 护城河" --stdout \
   | codex exec "基于输入资料，做一份价值投资分析，重点分析护城河、竞争格局、风险和估值影响。"```
 Codex 官方支持这种 prompt + stdin 模式，适合把命令输出作为上下文传给 Codex。
 
