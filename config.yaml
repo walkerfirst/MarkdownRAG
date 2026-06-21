@@ -2,9 +2,9 @@ project:
   name: local-md-rag
 
 sources:
-  - path: /home/neo/Documents/obsidian/investing/wiki/
+  - path: /home/neo/project/notes/investment/wiki/
     domain: stock
-  - path: /home/neo/Documents/obsidian/learning/wiki/
+  - path: /home/neo/project/notes/learning/wiki/
     domain: study
 exclude_names: [log.md]
 exclude_dirs: [templates]
