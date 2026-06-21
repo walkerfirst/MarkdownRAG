@@ -88,6 +88,25 @@ uv run python -m src.search "贵州茅台 经销商 i茅台" --top-k 8
 
 默认使用向量检索和关键词检索合并排序，并按 `search.relative_score_ratio` 过滤尾部低相关结果，避免上下文混入明显无关的笔记。
 
+### 全局别名（fish，任意目录可用）
+
+`python -m src.search` 依赖工作目录：`src` 包和 `config.yaml` 都按当前目录解析，必须在项目根下执行。把下面这个 fish function 存为 `~/.config/fish/functions/ragsearch.fish`（属于本机 shell 个人配置，不在仓库内），即可在任意目录调用：
+
+```fish
+function ragsearch --description 'MarkdownRAG 检索:任意目录可用,透传查询词与参数'
+    # env -C 在项目目录里执行(src 包与 config.yaml 都是相对 CWD),但不改当前 shell 的 cwd
+    env -C /home/neo/project/MarkdownRAG HF_HUB_OFFLINE=1 \
+        /home/neo/project/MarkdownRAG/.venv/bin/python -m src.search $argv
+end
+```
+
+fish 会自动加载，存好即生效。用法（`$argv` 原样透传查询词与参数）：
+
+```fish
+ragsearch "牧原股份 屠宰业务 渠道"
+ragsearch "贵州茅台 经销商 i茅台" --top-k 8
+```
+
 ## 生成 LLM 上下文
 
 输出到终端：
