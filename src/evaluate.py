@@ -21,10 +21,17 @@ def run_evaluation(config_path: str = "config.yaml") -> dict:
     details: list[dict] = []
 
     for item in queries:
+        # domain 是真实使用时已知的"选库"维度(投资走 stock、学习走 study),
+        # 故评测按问题 domain 过滤;显式 domain 字段优先,否则从 expected_files 前缀推断。
+        expected_files = item.get("expected_files", [])
+        domain = item.get("domain") or (
+            expected_files[0].split("/")[0] if expected_files else None
+        )
         results = search_chunks(
             query=item["query"],
             config_path=config_path,
             top_k=config["search"]["top_k"],
+            domain=domain,
         )
         files = {result["file_path"] for result in results}
         combined_text = "\n".join(result["content"] for result in results)
