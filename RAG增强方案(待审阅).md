@@ -172,24 +172,27 @@ NotebookLM 的不可替代优势(作为补充):**音频/视频概览、幻灯片
 
 ---
 
-## T2. 加入本地 reranker(进一步提准)— 暂缓(看本轮效果再定)
+## T2. 加入本地 reranker(进一步提准)— 代码就绪,待模型下载后测量(2026-06-21)
 
-**目标**:在混合检索召回后,用交叉编码器对候选重排,提升 Top-K 精度。README 已列为待办。
+**目标**:在混合检索召回后,用交叉编码器对候选重排,提升 Top-K 精度。
 
-**改动点**
-- `config.yaml` 新增 `reranker` 段:`enabled`、`model_name`(候选 `BAAI/bge-reranker-v2-m3`)、`candidate_k`(重排前候选数,如 20)。
-- `src/search.py` 的 `search_chunks` 中,在 `_merge_results` 之后、`_filter_results` 之前插入重排步骤:对 merged 的前 `candidate_k` 个候选用 reranker 算 query-chunk 相关分,替换/融合现有 score。
-- 新增 `src/reranker.py`(独立模块,带"模型不可用则跳过"的兜底,与 embedder 兜底风格一致)。
+**已定设计(2026-06-21)**
+- **模型**:`bge-reranker-v2-m3`(质量优先);本地 `models/bge-reranker-v2-m3/`,`HF_HUB_OFFLINE=1`。
+- **分数融合**:**直接用重排分替换**(reranker 即权威);重排分经 sigmoid 归一 0~1,与 cosine 同量纲,下游 `_filter_results` 不变。
+- **candidate_k = 30**:T7 诊断显示失败页埋在第 21~27 名,窗口必须够深;**开重排时向量取 candidate_k**(否则深埋页进不了候选),keyword limit≥candidate_k。
+
+**改动点(已实现)**
+- ✅ `config.yaml` 新增 `reranker` 段:`enabled: false`(默认关、可回退)、`model_name`、`candidate_k: 30`。
+- ✅ 新增 `src/reranker.py`:`LocalReranker`,`CrossEncoder` 加载,"模型不可用则跳过"兜底(同 embedder 风格)。
+- ✅ `src/search.py` 的 `search_chunks` 加 `reranker` 参数:开启时按 candidate_k 取候选 → merge → 对前 candidate_k 个 `rerank` 替换分 → `_filter_results`。
+- ✅ 测试:`test_reranker`(重排序/兜底跳过)、`test_search` 集成(enabled 时顺序随重排)。`pytest` 31 passed,默认关行为不变。
 
 **验收标准**
-- [ ] `reranker.enabled: false` 时行为与 T1 完全一致(可关闭、可回退)。
-- [ ] `enabled: true` 时在 **T7 真实评测集**上 `evaluate` 指标 ≥ 关闭 reranker 的基线;若反而下降则默认关闭并记录原因。
-- [ ] reranker 模型加载失败时自动跳过、不中断检索(打 warn)。
-- [ ] 单次 query 延迟在可接受范围(CPU 下记录实测耗时,作为讨论依据)。
+- [x] `enabled=false` 行为与现状一致(可回退)。
+- [x] 模型加载失败自动跳过、不中断(打 warn)。
+- [ ] **待模型下载**:`enabled=true` 在 T7(域内,基线 55%)上 `evaluate ≥` 基线;记录每条名次变化与单 query CPU 耗时。≥ 基线则默认开,否则记录原因。
 
-**待讨论**
-- 重排分数与现有 keyword/vector 分如何处理:直接替换,还是加权融合?
-- `candidate_k` 取多少?太大慢,太小漏召回。
+**前提**:`bge-reranker-v2-m3`(~2.2GB)需 curl 到 `models/bge-reranker-v2-m3/`(用户下载中)。
 
 ---
 

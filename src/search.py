@@ -10,6 +10,7 @@ from rich.panel import Panel
 from src.config import load_config, resolve_path
 from src.embedder import LocalEmbedder
 from src.metadata_store import MetadataStore
+from src.reranker import LocalReranker
 from src.sqlite_metadata_store import SQLiteMetadataStore
 from src.vector_store import ChromaVectorStore
 
@@ -103,6 +104,7 @@ def search_chunks(
     embedder: LocalEmbedder | None = None,
     vector_store: ChromaVectorStore | None = None,
     metadata_store: MetadataStore | None = None,
+    reranker: LocalReranker | None = None,
 ) -> list[dict]:
     config = load_config(config_path)
     top_k = top_k or config["search"]["top_k"]
@@ -135,22 +137,36 @@ def search_chunks(
     else:
         where = None
 
+    reranker_cfg = config.get("reranker", {})
+    rerank_enabled = reranker_cfg.get("enabled", False)
+    candidate_k = reranker_cfg.get("candidate_k", 30)
+
     query_embedding = embedder.embed_query(query)
-    vector_results = vector_store.search(query_embedding, top_k=max(top_k * 3, top_k), where=where)
+    # 开重排时候选深度取 candidate_k(否则深埋的期望页根本进不了候选)
+    vector_top = candidate_k if rerank_enabled else max(top_k * 3, top_k)
+    vector_results = vector_store.search(query_embedding, top_k=vector_top, where=where)
 
     keywords = extract_query_keywords(query)
+    keyword_limit = config["search"].get("keyword_top_k", top_k * 4)
+    if rerank_enabled:
+        keyword_limit = max(keyword_limit, candidate_k)
     keyword_chunks = metadata_store.search_chunks_by_keywords(
         keywords,
-        limit=config["search"].get("keyword_top_k", top_k * 4),
+        limit=keyword_limit,
         domain=domain,
         note_type=type,
     )
     merged = _merge_results(vector_results, _keyword_results(keyword_chunks, keywords))
 
-    # evidence 大小写不敏感子串后过滤,在 _merge_results 之后、_filter_results 之前
+    # evidence 大小写不敏感子串后过滤,在 _merge_results 之后、重排/_filter_results 之前
     if evidence:
         needle = evidence.lower()
         merged = [r for r in merged if needle in (r.get("evidence_level") or "").lower()]
+
+    # reranker:对前 candidate_k 个候选用交叉编码器替换分并重排;模型缺失则原样跳过
+    if rerank_enabled:
+        reranker = reranker or LocalReranker(reranker_cfg.get("model_name", ""))
+        merged = reranker.rerank(query, merged[:candidate_k])
 
     return _filter_results(
         merged,

@@ -34,3 +34,8 @@ search:
   min_score: 0.0
   relative_score_ratio: 0.7
   keyword_top_k: 20
+
+reranker:
+  enabled: false                       # 默认关、可回退;验证 >= 基线后再开
+  model_name: models/bge-reranker-v2-m3
+  candidate_k: 30                      # 诊断:期望页埋在 21~27 名,重排窗口必须够深

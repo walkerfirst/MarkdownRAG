@@ -1,3 +1,7 @@
+from pathlib import Path
+
+import yaml
+
 from src.search import search_chunks
 
 
@@ -141,3 +145,49 @@ def test_search_chunks_filters_by_evidence_substring() -> None:
         metadata_store=EmptyKeywordStore(),
     )
     assert [r["file_path"] for r in results] == ["stock/c/a.md"]
+
+
+class FakeReranker:
+    """把候选倒序并重新赋分,证明 reranker 输出顺序确实流到最终结果。"""
+
+    def rerank(self, query, candidates):
+        reversed_candidates = list(reversed(candidates))
+        for index, candidate in enumerate(reversed_candidates):
+            candidate["score"] = 1.0 - index * 0.1
+        return reversed_candidates
+
+
+def _write_reranker_config(tmp_path: Path) -> Path:
+    source_dir = tmp_path / "wiki"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    config = {
+        "project": {"name": "t"},
+        "paths": {
+            "chroma_dir": "data/chroma",
+            "processed_dir": "data/processed",
+            "metadata_db": "data/metadata.sqlite",
+            "eval_queries": "eval/queries.yaml",
+        },
+        "sources": [{"path": str(source_dir), "domain": "stock"}],
+        "embedding": {"provider": "fake", "model_name": "fake"},
+        "chunking": {"target_chars": 80, "max_chars": 160, "min_chars": 40, "overlap_chars": 20},
+        "search": {"top_k": 5, "min_score": 0.0, "relative_score_ratio": 0.0, "keyword_top_k": 20},
+        "reranker": {"enabled": True, "model_name": "x", "candidate_k": 30},
+    }
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump(config, allow_unicode=True), encoding="utf-8")
+    return config_path
+
+
+def test_search_applies_reranker_when_enabled(tmp_path: Path) -> None:
+    config_path = _write_reranker_config(tmp_path)
+    # 不开重排时 stock/c/a.md(0.72)排第一;FakeReranker 倒序后应换成 study/c/b.md
+    results = search_chunks(
+        query="测试",
+        config_path=str(config_path),
+        embedder=FakeEmbedder(),
+        vector_store=FilterVectorStore(),
+        metadata_store=EmptyKeywordStore(),
+        reranker=FakeReranker(),
+    )
+    assert results[0]["file_path"] == "study/c/b.md"
