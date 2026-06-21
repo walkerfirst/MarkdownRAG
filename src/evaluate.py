@@ -5,7 +5,11 @@ import yaml
 from rich.console import Console
 
 from src.config import load_config, resolve_path
+from src.embedder import LocalEmbedder
+from src.reranker import LocalReranker
 from src.search import search_chunks
+from src.sqlite_metadata_store import SQLiteMetadataStore
+from src.vector_store import ChromaVectorStore
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -16,6 +20,23 @@ def run_evaluation(config_path: str = "config.yaml") -> dict:
     eval_file = resolve_path(config["root_dir"], config["paths"]["eval_queries"])
     payload = yaml.safe_load(eval_file.read_text(encoding="utf-8")) or {}
     queries = payload.get("queries", [])
+
+    # 重量级组件只加载一次再复用(尤其 2.2GB reranker),避免每条 query 重载
+    embedder = LocalEmbedder(
+        config["embedding"]["model_name"],
+        query_instruction=config["embedding"].get("query_instruction", ""),
+    )
+    vector_store = ChromaVectorStore(str(resolve_path(config["root_dir"], config["paths"]["chroma_dir"])))
+    metadata_store = SQLiteMetadataStore(str(resolve_path(config["root_dir"], config["paths"]["metadata_db"])))
+    reranker_cfg = config.get("reranker", {})
+    reranker = (
+        LocalReranker(
+            reranker_cfg["model_name"],
+            max_passage_chars=reranker_cfg.get("max_passage_chars", 0),
+        )
+        if reranker_cfg.get("enabled")
+        else None
+    )
 
     passed = 0
     details: list[dict] = []
@@ -32,6 +53,10 @@ def run_evaluation(config_path: str = "config.yaml") -> dict:
             config_path=config_path,
             top_k=config["search"]["top_k"],
             domain=domain,
+            embedder=embedder,
+            vector_store=vector_store,
+            metadata_store=metadata_store,
+            reranker=reranker,
         )
         files = {result["file_path"] for result in results}
         combined_text = "\n".join(result["content"] for result in results)

@@ -165,7 +165,10 @@ def search_chunks(
 
     # reranker:对前 candidate_k 个候选用交叉编码器替换分并重排;模型缺失则原样跳过
     if rerank_enabled:
-        reranker = reranker or LocalReranker(reranker_cfg.get("model_name", ""))
+        reranker = reranker or LocalReranker(
+            reranker_cfg.get("model_name", ""),
+            max_passage_chars=reranker_cfg.get("max_passage_chars", 0),
+        )
         merged = reranker.rerank(query, merged[:candidate_k])
 
     return _filter_results(

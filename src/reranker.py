@@ -12,10 +12,19 @@ class LocalReranker:
     下游 _filter_results 的 min_score / relative_score_ratio 仍然适用。
     """
 
-    def __init__(self, model_name: str, model: Any | None = None, use_fallback: bool = True):
+    def __init__(
+        self,
+        model_name: str,
+        model: Any | None = None,
+        use_fallback: bool = True,
+        max_passage_chars: int = 0,
+    ):
         self.model_name = model_name
         self._model = model
         self.backend = "cross-encoder"
+        # 喂给 cross-encoder 打分的 passage 截断长度;0 表示不截断(用全文)。
+        # 截断只影响打分输入,candidate["content"] 仍保留全文供上游展示。
+        self.max_passage_chars = max_passage_chars
 
         if self._model is None:
             try:
@@ -33,7 +42,10 @@ class LocalReranker:
         if not candidates or self.backend == "skip":
             return candidates
 
-        pairs = [(query, candidate["content"]) for candidate in candidates]
+        def passage(content: str) -> str:
+            return content[: self.max_passage_chars] if self.max_passage_chars else content
+
+        pairs = [(query, passage(candidate["content"])) for candidate in candidates]
         logits = self._model.predict(pairs)
         for candidate, logit in zip(candidates, logits):
             candidate["score"] = 1.0 / (1.0 + math.exp(-float(logit)))

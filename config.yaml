@@ -23,19 +23,20 @@ embedding:
   query_instruction: "为这个句子生成表示以用于检索相关文章："
 
 chunking:
-  target_chars: 800
+  target_chars: 800 # chunk 切多大（输出内容的实际长度）
   max_chars: 1200
   min_chars: 200
   overlap_chars: 100
 
 search:
   top_k: 5
-  preview_chars: 500
+  preview_chars: 500 # 展示时预览截多少（只影响显示）
   min_score: 0.0
   relative_score_ratio: 0.7
   keyword_top_k: 20
 
 reranker:
-  enabled: false                       # 默认关、可回退;验证 >= 基线后再开
+  enabled: false                       # 默认关、可回退;开则全文重排 +25pp(55%→80%)但单 query CPU ~28s
   model_name: models/bge-reranker-v2-m3
   candidate_k: 30                      # 诊断:期望页埋在 21~27 名,重排窗口必须够深
+  # 提速杠杆(默认不启用):max_passage_chars: 256 # reranker 打分时读多少（只影响排序，不影响输出）可把 28s→7s,代价命中率 80%→75%
