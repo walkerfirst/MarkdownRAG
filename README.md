@@ -135,6 +135,22 @@ uv run python -m src.context_builder "牧原股份 屠宰业务 护城河" --std
 uv run python -m src.context_builder "贵州茅台 经销商 i茅台" --output context.md
 ```
 
+## 与 Claude Code 对接（MCP，多轮自主检索）
+
+把检索暴露成 MCP 工具，Claude Code 作为 client 可自主多轮调用 `search_notes`，
+你只需用自然语言提问，AI 自己决定查几轮、查什么、综合分析。
+
+接入（`env -C` 让 server 在项目目录启动，解决 `src` 包与 `config.yaml` 的相对路径）：
+
+```fish
+claude mcp add markdown-rag -- \
+  env -C /home/neo/project/MarkdownRAG HF_HUB_OFFLINE=1 \
+  /home/neo/project/MarkdownRAG/.venv/bin/python -m src.mcp_server
+```
+
+之后在 Claude Code 里直接问，例如「分析牧原的护城河和疫病风险」，AI 会自动调用
+`search_notes` 多轮检索后给出分析。MCP 路径默认走快的混合检索（秒回），不开 reranker。
+
 ## 检索验收
 
 ```bash

@@ -2,7 +2,7 @@
 
 > 用途:列出后续要做的更新,采用「任务 + 验收」格式,供审阅与讨论。
 > 状态约定:`待审阅` = 方案待你确认;`已确认` = 可动手;`已完成` = 做完并通过验收。
-> **本轮 T0 + T5 + T1 + 前置配置 已完成并验证(2026-06-15)。T6 + T7 已完成并验证(2026-06-20)。T2 已完成并测量(2026-06-21,reranker 全文 80%/+25pp,默认关 opt-in)。后续:T3(原 T4 已并入 T6)。**
+> **本轮 T0 + T5 + T1 + 前置配置 已完成并验证(2026-06-15)。T6 + T7 已完成并验证(2026-06-20)。T2 已完成并测量(2026-06-21,reranker 全文 80%/+25pp,默认关 opt-in)。T3 已完成(2026-06-21,MCP server 对接 Claude Code)。原 T4 已并入 T6。**
 > **数据源路径已迁移(2026-06-20):`/home/neo/project/notes/{investment,learning}/wiki/`。**
 
 ## 执行记录与环境备忘(本轮已完成)
@@ -208,17 +208,15 @@ NotebookLM 的不可替代优势(作为补充):**音频/视频概览、幻灯片
 
 ---
 
-## T3. 暴露为 MCP server(对接 Codex/Claude 等)— 暂缓
+## T3. 暴露为 MCP server(对接 Claude Code)— 已完成(2026-06-21)
 
-**目标**:把检索与上下文构建做成 MCP 工具,任意 MCP 客户端(Codex、Claude Code、Cursor)可直接调用,替代当前的管道/文件方式。README 方案 3 已规划。
+**目标**:把检索做成 MCP 工具,Claude Code 作为 client 自主多轮调用,替代手动管道/文件方式。
 
-**改动点**
-- 新增 `src/mcp_server.py`,复用现有 `search_chunks` 和 `context_builder`,暴露两个工具:
-  - `search_local_notes(query, top_k)` → 返回检索结果
-  - `build_investment_context(query)` → 返回拼好的上下文
-- CLI 与 MCP 共用同一索引,不重复造逻辑。
-- 补 `pyproject.toml` 的 MCP 依赖(如 `mcp` / `fastmcp`,选型待定)。
-- 文档:更新 README 给出 Codex `config.toml` / `.codex/config.toml` 接入示例。
+**实现(已完成)**
+- 新增单文件 `src/mcp_server.py`:FastMCP/stdio,暴露唯一工具 `search_notes(query, domain?, top_k?)`,复用 `search_chunks`,惰性常驻加载,`reranker=None` 走快的混合检索支撑多轮。
+- `pyproject.toml` 加 `mcp` 依赖;新增 `tests/test_mcp_server.py`(2 条),全量 33 passed。
+- 接入:`claude mcp add` + `env -C`,`claude mcp list` 实测 ✔ Connected;端到端真实查询返回牧原命中。README/USAGE 已补接入示例。
+- 设计与计划:`docs/superpowers/specs/2026-06-21-mcp-server-design.md`、`docs/superpowers/plans/2026-06-21-mcp-server.md`。
 
 **验收标准**
 - [ ] `uv run python -m src.mcp_server` 能启动并被 MCP 客户端发现两个工具。
